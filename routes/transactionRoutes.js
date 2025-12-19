@@ -1,0 +1,1 @@
+const r=require("express").Router();const c=require("../controllers/transactionController");const a=require("../middleware/authMiddleware");r.get("/",a,c.listTransactions);module.exports=r;

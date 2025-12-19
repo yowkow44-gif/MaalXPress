@@ -1,0 +1,1 @@
+const r=require("express").Router();const c=require("../controllers/referralController");const a=require("../middleware/authMiddleware");r.get("/",a,c.getReferrals);module.exports=r;

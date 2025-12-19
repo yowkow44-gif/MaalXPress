@@ -1,0 +1,1 @@
+exports.getReferrals = (req,res)=>{ res.json([]); }; 
