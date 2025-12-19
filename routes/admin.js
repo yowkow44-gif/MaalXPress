@@ -3,7 +3,8 @@ const router = express.Router();
 
 const auth = require("../middleware/authMiddleware");
 const adminMiddleware = require("../middleware/adminMiddleware");
-
+// 👇 THIS LINE IS IMPORTANT
+const { sendNotification } = require("../controllers/notificationController");
 const {
   setDepositWallet,
 
@@ -35,6 +36,12 @@ const {
    ✅ EXISTING ROUTE (UNCHANGED)
 ====================================================== */
 router.post("/set-deposit-wallet", auth, setDepositWallet);
+
+router.post(
+   "/send-notification",
+   adminMiddleware,
+   sendNotification
+ );
 
 /* ======================================================
    🔐 ADMIN PROTECTED ROUTES
