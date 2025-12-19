@@ -5,23 +5,7 @@ const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const path = require("path");
-const fs = require("fs");
 require("dotenv").config();
-
-const app = express();
-
-// 👇 YAHI PE
-const uploadsDir = path.join(__dirname, "uploads");
-const ordersDir = path.join(__dirname, "uploads", "orders");
-
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-if (!fs.existsSync(ordersDir)) {
-  fs.mkdirSync(ordersDir, { recursive: true });
-}
-
 
 // ================================
 //        ROUTES IMPORT
@@ -35,11 +19,11 @@ const transactionRoutes = require("./routes/transactionRoutes");
 const adminRoutes = require("./routes/admin");
 
 const orderRoutes = require("./routes/orderRoutes");
-
+const notificationRoutes = require("./routes/notificationRoutes");
 // ================================
 //        INITIALIZE APP
 // ================================
-
+const app = express();
 
 // ✅ CORS (Frontend Allow)
 app.use(
@@ -50,7 +34,8 @@ app.use(
 );
 
 // ✅ Body Parser (REQUIRED FOR LOGIN/SIGNUP)
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ limit: "10mb", extended: true }));
 app.use(express.urlencoded({ extended: true }));
 
 // ================================
@@ -117,7 +102,7 @@ app.use("/admin", require("./routes/admin"));
 app.use("/deposit", require("./routes/depositRoutes"));
 app.use("/withdraw", require("./routes/withdrawRoutes"));
 app.use("/api/orders", require("./routes/orderRoutes"));
-
+app.use("/api/notifications", notificationRoutes);
 // ================================
 //   DEFAULT ROUTE (FOR TEST)
 // ================================
