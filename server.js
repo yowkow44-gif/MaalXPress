@@ -5,7 +5,23 @@ const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const path = require("path");
+const fs = require("fs");
 require("dotenv").config();
+
+const app = express();
+
+// 👇 YAHI PE
+const uploadsDir = path.join(__dirname, "uploads");
+const ordersDir = path.join(__dirname, "uploads", "orders");
+
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+if (!fs.existsSync(ordersDir)) {
+  fs.mkdirSync(ordersDir, { recursive: true });
+}
+
 
 // ================================
 //        ROUTES IMPORT
@@ -23,7 +39,7 @@ const orderRoutes = require("./routes/orderRoutes");
 // ================================
 //        INITIALIZE APP
 // ================================
-const app = express();
+
 
 // ✅ CORS (Frontend Allow)
 app.use(
