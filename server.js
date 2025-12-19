@@ -1,11 +1,26 @@
 // ================================
 //        IMPORTS
 // ================================
+const fs = require("fs");
+const path = require("path");
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
-const path = require("path");
 require("dotenv").config();
+
+// ================================
+//   ENSURE UPLOAD DIRECTORIES
+//   (Render-safe fix)
+// ================================
+const baseUploadDir = path.join(__dirname, "uploads");
+const ordersDir = path.join(baseUploadDir, "orders");
+const depositsDir = path.join(baseUploadDir, "deposits");
+
+[baseUploadDir, ordersDir, depositsDir].forEach((dir) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+});
 
 // ================================
 //        ROUTES IMPORT
@@ -17,15 +32,17 @@ const referralRoutes = require("./routes/referralRoutes");
 const serviceRoutes = require("./routes/serviceRoutes");
 const transactionRoutes = require("./routes/transactionRoutes");
 const adminRoutes = require("./routes/admin");
-
 const orderRoutes = require("./routes/orderRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
+
 // ================================
 //        INITIALIZE APP
 // ================================
 const app = express();
 
-// ✅ CORS (Frontend Allow)
+// ================================
+//        CORS
+// ================================
 app.use(
   cors({
     origin: process.env.CLIENT_URL || "http://localhost:5173",
@@ -33,13 +50,14 @@ app.use(
   })
 );
 
-// ✅ Body Parser (REQUIRED FOR LOGIN/SIGNUP)
+// ================================
+//        BODY PARSER
+// ================================
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
-app.use(express.urlencoded({ extended: true }));
 
 // ================================
-//   SERVE UPLOADED IMAGES STATICALLY
+//   SERVE UPLOADED FILES
 // ================================
 app.use("/uploads", (req, res, next) => {
   res.setHeader("Content-Disposition", "inline");
@@ -49,7 +67,7 @@ app.use("/uploads", (req, res, next) => {
 
 app.use(
   "/uploads",
-  express.static(path.join(__dirname, "uploads"), {
+  express.static(baseUploadDir, {
     setHeaders: (res, filePath) => {
       const lower = filePath.toLowerCase();
 
@@ -67,44 +85,26 @@ app.use(
 // ================================
 //        CONNECT MONGODB
 // ================================
-const MONGO_URL = process.env.MONGO_URL;
-
 mongoose
-  .connect(MONGO_URL, { dbName: "GrabWebsite" })
+  .connect(process.env.MONGO_URL, { dbName: "GrabWebsite" })
   .then(() => console.log("🔥 MongoDB connected successfully"))
   .catch((err) => console.log("❌ MongoDB Error:", err));
 
 // ================================
 //        API ROUTES
 // ================================
-
-// ✅ AUTH (Signup / Login)
 app.use("/api/auth", authRoutes);
-
-
-
-// ✅ ORDERS
 app.use("/api/orders", orderRoutes);
-
-// ✅ DEPOSIT / WITHDRAW
 app.use("/api/deposit", depositRoutes);
 app.use("/api/withdraw", withdrawRoutes);
-
-// ✅ REFERRALS / SERVICES / TRANSACTIONS
 app.use("/api/referrals", referralRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/transactions", transactionRoutes);
-
-// ✅ ADMIN
 app.use("/api/admin", adminRoutes);
-app.use("/api/deposit", require("./routes/depositRoutes"));
-app.use("/admin", require("./routes/admin"));
-app.use("/deposit", require("./routes/depositRoutes"));
-app.use("/withdraw", require("./routes/withdrawRoutes"));
-app.use("/api/orders", require("./routes/orderRoutes"));
 app.use("/api/notifications", notificationRoutes);
+
 // ================================
-//   DEFAULT ROUTE (FOR TEST)
+//        HEALTH CHECK
 // ================================
 app.get("/", (req, res) => {
   res.json({ success: true, message: "Backend API Working 🚀" });
@@ -114,6 +114,6 @@ app.get("/", (req, res) => {
 //        START SERVER
 // ================================
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () =>
-  console.log(`🚀 Backend running on port ${PORT}`)
-);
+app.listen(PORT, () => {
+  console.log(`🚀 Backend running on port ${PORT}`);
+});
