@@ -3,72 +3,61 @@ const router = express.Router();
 
 const auth = require("../middleware/authMiddleware");
 const adminMiddleware = require("../middleware/adminMiddleware");
-// 👇 THIS LINE IS IMPORTANT
 const { sendNotification } = require("../controllers/notificationController");
+
 const {
   setDepositWallet,
-
-  // Dashboard
   getStats,
 
-  // Deposit
   getDepositRequests,
   approveDeposit,
   rejectDeposit,
 
-  // Withdraw
   getWithdrawRequests,
   approveWithdraw,
   rejectWithdraw,
 
-  // Balance
-  updateBalance,
+  getDepositHistory,
+  getWithdrawHistory,
 
-  // Users
+  updateBalance,
   searchUsers,
   resetUser,
-
-  // Address
   updateDepositAddress
 } = require("../controllers/adminController");
 
-/* ======================================================
-   ✅ EXISTING ROUTE (UNCHANGED)
-====================================================== */
+/* ================= PUBLIC ================= */
 router.post("/set-deposit-wallet", auth, setDepositWallet);
+router.post("/send-notification", adminMiddleware, sendNotification);
 
-router.post(
-   "/send-notification",
-   adminMiddleware,
-   sendNotification
- );
-
-/* ======================================================
-   🔐 ADMIN PROTECTED ROUTES
-====================================================== */
+/* ================= ADMIN PROTECTED ================= */
 router.use(adminMiddleware);
 
-/* ================= DASHBOARD ================= */
+/* DASHBOARD */
 router.get("/stats", getStats);
 
-/* ================= DEPOSIT ================= */
+/* HISTORY */
+router.get("/deposit-history", getDepositHistory);
+router.get("/withdraw-history", getWithdrawHistory);
+
+/* DEPOSIT */
 router.get("/deposit-requests", getDepositRequests);
 router.post("/deposit-requests/:id/approve", approveDeposit);
 router.post("/deposit-requests/:id/reject", rejectDeposit);
 
-/* ================= WITHDRAW ================= */
+/* WITHDRAW */
 router.get("/withdraw-requests", getWithdrawRequests);
 router.post("/withdraw-requests/:id/approve", approveWithdraw);
 router.post("/withdraw-requests/:id/reject", rejectWithdraw);
 
-/* ================= BALANCE ================= */
+/* BALANCE */
 router.post("/update-balance", updateBalance);
 
-/* ================= USERS ================= */
+/* USERS */
 router.get("/search-users", searchUsers);
 router.post("/reset-user/:userId", resetUser);
 
-/* ================= DEPOSIT ADDRESS ================= */
+/* ADDRESS */
 router.post("/update-deposit-address", updateDepositAddress);
 
 module.exports = router;
