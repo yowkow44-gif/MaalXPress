@@ -239,3 +239,50 @@ exports.updateDepositAddress = async (req, res) => {
 
   res.json({ success: true });
 };
+/* ======================================================
+   📜 DEPOSIT HISTORY (APPROVED + REJECTED)
+====================================================== */
+exports.getDepositHistory = async (req, res) => {
+  try {
+    const history = await DepositRequest.find({
+      status: { $in: ["approved", "rejected"] }
+    })
+      .populate("user", "nickname phone")
+      .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      history
+    });
+  } catch (err) {
+    console.error("getDepositHistory error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to load deposit history"
+    });
+  }
+};
+
+/* ======================================================
+   📜 WITHDRAW HISTORY (APPROVED + REJECTED)
+====================================================== */
+exports.getWithdrawHistory = async (req, res) => {
+  try {
+    const history = await WithdrawRequest.find({
+      status: { $in: ["approved", "rejected"] }
+    })
+      .populate("user", "nickname phone")
+      .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      history
+    });
+  } catch (err) {
+    console.error("getWithdrawHistory error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to load withdraw history"
+    });
+  }
+};
