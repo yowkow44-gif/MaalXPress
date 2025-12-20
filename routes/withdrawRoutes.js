@@ -90,7 +90,7 @@ router.get("/withdraw-records/:invitationCode", auth, async (req, res) => {
           totalWithdrawals,
           todayWithdrawals,
           pendingWithdrawals,
-          withdrawalFeeRate: 2
+          withdrawalFeeRate: 5
         }
       });
     } catch (error) {
