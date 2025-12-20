@@ -10,7 +10,6 @@ require("dotenv").config();
 
 // ================================
 //   ENSURE UPLOAD DIRECTORIES
-//   (Render-safe fix)
 // ================================
 const baseUploadDir = path.join(__dirname, "uploads");
 const ordersDir = path.join(baseUploadDir, "orders");
@@ -90,6 +89,12 @@ mongoose
   .then(() => console.log("🔥 MongoDB connected successfully"))
   .catch((err) => console.log("❌ MongoDB Error:", err));
 
+  // ================================
+//   CRON JOBS (AUTO CLEANUP)
+// ================================
+require("./jobs/cleanupHistory");
+
+
 // ================================
 //        API ROUTES
 // ================================
@@ -108,6 +113,17 @@ app.use("/api/notifications", notificationRoutes);
 // ================================
 app.get("/", (req, res) => {
   res.json({ success: true, message: "Backend API Working 🚀" });
+});
+
+// ================================
+//   GLOBAL ERROR HANDLER (OPTIONAL)
+// ================================
+app.use((err, req, res, next) => {
+  console.error("🔥 Server Error:", err);
+  res.status(500).json({
+    success: false,
+    message: "Internal Server Error",
+  });
 });
 
 // ================================
