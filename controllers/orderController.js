@@ -149,11 +149,12 @@ exports.submitOrder = async (req, res) => {
       return res.status(403).json({ success: false, message: "Forbidden" });
     }
 
-    // ✅ No balance check (earning system)
+    // 1️⃣ ARCHIVE (for logic consistency)
     order.status = "archived";
     order.user = user._id;
     await order.save();
 
+    // 2️⃣ COMMISSION CALCULATION
     const commission = Number(order.commission || 0);
 
     user.totalBalance = (user.totalBalance || 0) + commission;
@@ -162,9 +163,15 @@ exports.submitOrder = async (req, res) => {
 
     await user.save();
 
+    // 3️⃣ 🔥 DELETE ORDER FROM MONGODB (SPECIFIC USER)
+    await Order.deleteOne({
+      _id: orderId,
+      user: user._id
+    });
+
     res.json({
       success: true,
-      message: "Order completed",
+      message: "Order completed & deleted after archive",
       balance: user.totalBalance
     });
 
@@ -173,3 +180,4 @@ exports.submitOrder = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
