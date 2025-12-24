@@ -33,10 +33,7 @@ exports.setDepositWallet = async (req, res) => {
   
       user.depositWallet.address = address;
       user.depositWallet.network = "TRC20";
-  
-      // optional sync
-      user.wallet.address = address;
-  
+       
       await user.save();
   
       res.json({
