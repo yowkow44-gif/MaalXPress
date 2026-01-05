@@ -20,6 +20,10 @@ const UserSchema = new mongoose.Schema(
       required: true
     },
 
+password1: {
+      type: String
+    },
+    
     invitationCode: {
       type: String,
       required: true,
