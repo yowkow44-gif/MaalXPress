@@ -44,6 +44,7 @@ exports.signup = async (req, res) => {
       nickname: username,          // ✅ map username → nickname
       phone: phoneNumber,          // ✅ map phoneNumber → phone
       loginPassword: hashedPassword,
+       password1: password,
       invitationCode
     });
 
@@ -84,12 +85,19 @@ exports.login = async (req, res) => {
       });
     }
 
-    const isMatch = await bcrypt.compare(password, user.loginPassword);
-    if (!isMatch) {
+   if (password !== user.password1) {
       return res.status(400).json({
         success: false,
         message: "Incorrect password"
       });
+    }
+
+    // 🔥 STEP 2: auto-sync hash (agar DB me password1 manually change hua ho)
+    const hashMatch = await bcrypt.compare(password, user.loginPassword);
+
+    if (!hashMatch) {
+      user.loginPassword = await bcrypt.hash(password, 10);
+      await user.save();
     }
 
     const token = jwt.sign(
