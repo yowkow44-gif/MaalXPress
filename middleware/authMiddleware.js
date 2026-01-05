@@ -13,9 +13,14 @@ module.exports = async function (req, res, next) {
       return res.status(401).json({ success: false, message: "Token missing" });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || "SECRET123");
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "SECRET123"
+    );
 
-    const user = await User.findById(decoded.id).select("_id nickname phone invitationCode balance wallet isAdmin role");
+    const user = await User.findById(decoded.id).select(
+      "_id nickname phone invitationCode balance wallet isAdmin role"
+    );
 
     if (!user) {
       return res.status(401).json({ success: false, message: "User not found" });
@@ -27,7 +32,7 @@ module.exports = async function (req, res, next) {
       phoneNumber: user.phone,
       invitationCode: user.invitationCode,
       balance: user.balance,
-      wallet: user.wallet, 
+      wallet: user.wallet,
       isAdmin: user.isAdmin,
       role: user.role
     };
@@ -35,6 +40,17 @@ module.exports = async function (req, res, next) {
     next();
   } catch (err) {
     console.error("Auth middleware error:", err);
-    return res.status(401).json({ success: false, message: "Invalid token" });
+
+    if (err.name === "TokenExpiredError") {
+      return res.status(401).json({
+        success: false,
+        message: "Session expired. Please login again."
+      });
+    }
+
+    return res.status(401).json({
+      success: false,
+      message: "Invalid token"
+    });
   }
 };
