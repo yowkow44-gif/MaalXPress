@@ -4,6 +4,7 @@ const User = require("../models/User");
 
 exports.uploadCsvController = async (req, res) => {
   try {
+
     const { nickname } = req.body;
 
     if (!nickname || nickname.trim() === "") {
@@ -21,17 +22,22 @@ exports.uploadCsvController = async (req, res) => {
     }
 
     // 🔥 FIND USER BY NICKNAME
-    const user = await User.findOne({ nickname: nickname.trim() });
-    if (!user || !user.invitationCode) {
+    const user = await User.findOne({
+      nickname: nickname.trim()
+    });
+
+    if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found or invitation code missing"
+        message: "User not found"
       });
     }
 
-    const invitationCode = user.invitationCode;
+    // 🔥 NEW MAIN SYSTEM
+    const assignedTo = user._id;
 
     const rows = await csv().fromFile(req.file.path);
+
     if (!rows.length) {
       return res.status(400).json({
         success: false,
@@ -40,6 +46,7 @@ exports.uploadCsvController = async (req, res) => {
     }
 
     const platform = rows[0].platform;
+
     if (!platform) {
       return res.status(400).json({
         success: false,
@@ -47,32 +54,55 @@ exports.uploadCsvController = async (req, res) => {
       });
     }
 
-    // 🔢 ORDER INDEX (SAME AS SINGLE / COMBINE)
+    // 🔥 ORDER INDEX PER USER + PLATFORM
     const lastOrder = await Order.findOne({
       platform,
-      invitationCode
+      assignedTo
     }).sort({ orderIndex: -1 });
 
-    let orderIndex = lastOrder ? lastOrder.orderIndex + 1 : 1;
+    let orderIndex =
+      lastOrder ? lastOrder.orderIndex + 1 : 1;
 
+    // 🔥 CREATE CSV ORDERS
     for (const row of rows) {
-      await Order.create({
-        platform: row.platform,
-        title: row.title,
-        amount: Number(row.amount),
-        commission: Number(row.commission || 0),
-        totalProfit: Number(row.totalProfit || row.commission || 0),
-        orderType: row.orderType || "single",
 
+      await Order.create({
+
+        platform: row.platform,
+
+        title: row.title,
+
+        amount: Number(row.amount),
+
+        commission: Number(
+          row.commission || 0
+        ),
+
+        totalProfit: Number(
+          row.totalProfit ||
+          row.commission ||
+          0
+        ),
+
+        orderType:
+          row.orderType || "single",
+
+        // 🔥 NEW MAIN SYSTEM
+        assignedTo,
+
+        // images
         image: row.image || "",
+
         images: row.images
-          ? row.images.split(",").map(i => i.trim()).filter(Boolean)
+          ? row.images
+              .split(",")
+              .map(i => i.trim())
+              .filter(Boolean)
           : [],
 
-        // 🔥 IMPORTANT
-        invitationCode,
         orderIndex: orderIndex++,
-        status: "active"
+
+        status: "active",
       });
     }
 
@@ -82,10 +112,13 @@ exports.uploadCsvController = async (req, res) => {
     });
 
   } catch (err) {
+
     console.error("CSV upload error:", err);
+
     return res.status(500).json({
       success: false,
       message: "CSV upload failed"
     });
+
   }
 };

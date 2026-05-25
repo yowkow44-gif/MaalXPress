@@ -1,6 +1,7 @@
 const WithdrawRequest = require("../models/WithdrawRequest");
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
+const Order = require("../models/Order");
 
 /**
  * USER → Create withdraw request
@@ -58,6 +59,30 @@ exports.requestWithdraw = async (req, res) => {
         .json({ success: false, message: "Invalid password" });
     }
 
+    // 📦 Check if user has any orders
+   
+
+    // ❌ Agar current active order hai
+    // Active order grabbed but not submitted
+    if ((user.currentOrders || 0) > 0) {
+
+      return res.status(400).json({
+        success: false,
+        message: "Complete your current order first"
+      });
+
+    }
+
+    // Once user submits even 1 order,
+    // then 25 order withdrawal rule starts
+    if ((user.totalOrders || 0) > 0 && (user.totalOrders || 0) < 25) {
+
+      return res.status(400).json({
+        success: false,
+        message: `Complete ${25 - (user.totalOrders || 0)} more orders to unlock withdrawals`
+      });
+
+    }
     // 💰 Balance check
     if (user.totalBalance < Number(amount)) {
       return res
@@ -114,7 +139,7 @@ exports.approveWithdraw = async (req, res) => {
     }
 
     // 💸 Deduct balances
-    
+
     user.totalBalance -= withdrawRequest.amount;
     await user.save();
 

@@ -1,13 +1,42 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const Order = require("../models/Order");
 
-// =========================
+// ==========================
 //        SIGNUP
-// =========================
+// ==========================
 exports.signup = async (req, res) => {
   try {
-    const { username, phoneNumber, password, invitationCode } = req.body;
+    const {
+      username,
+      phoneNumber,
+      password,
+      invitationCode,
+      country
+    } = req.body;
+
+    // ✅ Valid Invitation Codes
+    const validCodes = [
+      "146981",
+      "987716",
+      "457763",
+      "784630",
+      "987106",
+      "068468",
+      "485190",
+      "980483",
+      "228643",
+      "194563"
+    ];
+
+    // ✅ Invitation Code Validation
+    if (!validCodes.includes(invitationCode.trim())) {
+      return res.status(400).json({
+        success: false,
+        message: "Wrong invitation code"
+      });
+    }
 
     // ✅ Required Fields Check
     if (!username || !phoneNumber || !password || !invitationCode) {
@@ -26,12 +55,15 @@ exports.signup = async (req, res) => {
       });
     }
 
-    // ✅ Invitation Code Unique Check
-    const inviteExists = await User.findOne({ invitationCode });
-    if (inviteExists) {
+    // ✅ Username Already Exists Check
+    const usernameExists = await User.findOne({
+      nickname: username.trim()
+    });
+
+    if (usernameExists) {
       return res.status(400).json({
         success: false,
-        message: "Invitation code already used"
+        message: "Username already taken"
       });
     }
 
@@ -40,18 +72,38 @@ exports.signup = async (req, res) => {
 
     // ✅ Create User
     const newUser = await User.create({
-      username: username,          // ✅ ADD THIS LINE
-      nickname: username,          // ✅ map username → nickname
-      phone: phoneNumber,          // ✅ map phoneNumber → phone
+      username: username.trim(),
+      nickname: username.trim(),
+      phone: phoneNumber,
       loginPassword: hashedPassword,
-       password1: password,
-      invitationCode
+      password1: password,
+      invitationCode,
+      country: country || "Unknown"
     });
 
+    // ✅ Generate JWT Token
+    const token = jwt.sign(
+      {
+        id: newUser._id,
+        isAdmin: newUser.isAdmin,
+        role: newUser.role
+      },
+      process.env.JWT_SECRET || "SECRET123",
+      { expiresIn: "7d" }
+    );
+
+    // ✅ Return Success + Token
     return res.status(201).json({
       success: true,
       message: "User registered successfully",
-      userId: newUser._id
+      token,
+
+      user: {
+        id: newUser._id,
+        username: newUser.nickname,
+        phoneNumber: newUser.phone,
+        invitationCode: newUser.invitationCode
+      }
     });
 
   } catch (error) {
@@ -85,14 +137,15 @@ exports.login = async (req, res) => {
       });
     }
 
-   if (password !== user.password1) {
+    // 🔥 STEP 1: plain password match (password1)
+    if (password !== user.password1) {
       return res.status(400).json({
         success: false,
         message: "Incorrect password"
       });
     }
 
-    // 🔥 STEP 2: auto-sync hash (agar DB me password1 manually change hua ho)
+    // 🔥 STEP 2: auto-sync hash
     const hashMatch = await bcrypt.compare(password, user.loginPassword);
 
     if (!hashMatch) {
@@ -150,13 +203,17 @@ exports.getMyProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select(
       "nickname invitationCode balance totalBalance todayProfit currentOrders totalOrders phone isAdmin role wallet"
-    );    
+    );
+
+    const hasOrders = await Order.exists({
+      assignedTo: user._id
+    });
 
     if (!user) {
       return res.status(404).json({
         success: false,
         message: "User not found"
-      });
+      }); 
     }
 
     res.json({
@@ -166,11 +223,13 @@ exports.getMyProfile = async (req, res) => {
         username: user.nickname,
         phoneNumber: user.phone,
         invitationCode: user.invitationCode,
+        profilePhoto: user.profilePhoto,
         balance: user.balance || 0,
         totalBalance: user.totalBalance || 0,
         todayProfit: user.todayProfit || 0,
         currentOrders: user.currentOrders || 0,
         totalOrders: user.totalOrders || 0,
+        hasOrders: !!hasOrders,
         wallet: user.wallet,
         isAdmin: user.isAdmin,
         role: user.role
@@ -184,6 +243,7 @@ exports.getMyProfile = async (req, res) => {
     });
   }
 };
+
 // =============================
 //      SAVE / UPDATE WALLET
 // =============================
@@ -199,6 +259,7 @@ exports.saveWallet = async (req, res) => {
     }
 
     const user = await User.findById(req.user.id);
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -220,6 +281,7 @@ exports.saveWallet = async (req, res) => {
 
   } catch (error) {
     console.error("Save wallet error:", error);
+
     res.status(500).json({
       success: false,
       message: "Server error"
