@@ -4,7 +4,6 @@ const router = express.Router();
 const multer = require("multer");
 const path = require("path");
 const auth = require("../middleware/authMiddleware");
-const admin = require("../middleware/adminMiddleware");
 const { createOrder, getOrdersByPlatform, submitOrder } = require("../controllers/orderController");
 const { uploadCsvController } = require("../controllers/orderCsvController");
 
@@ -22,16 +21,22 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // ADMIN → create single order (use field name 'image')
-router.post("/create-single", auth, admin, upload.single("image"), createOrder);
+router.post(
+    "/create-single",
+    upload.single("image"),
+    createOrder
+);
 
 // ADMIN → create combine order (use field name 'images')
-router.post("/create-combine", auth, admin, upload.array("images", 5), createOrder);
+router.post(
+    "/create-combine",
+    upload.array("images", 5),
+    createOrder
+);
 
 // CSV UPLOAD ROUTE (ADMIN ONLY)
 router.post(
     "/upload-csv",
-    auth,
-    admin,
     upload.single("csvFile"),
     uploadCsvController
 );
