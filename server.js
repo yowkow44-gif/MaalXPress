@@ -34,6 +34,9 @@ const adminRoutes = require("./routes/admin");
 const orderRoutes = require("./routes/orderRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 
+// ✅ NEW SUPPORT ROUTES
+const supportRoutes = require("./routes/supportRoutes");
+
 // ================================
 //        INITIALIZE APP
 // ================================
@@ -70,11 +73,23 @@ app.use(
     setHeaders: (res, filePath) => {
       const lower = filePath.toLowerCase();
 
-      if (lower.endsWith(".png")) res.setHeader("Content-Type", "image/png");
-      if (lower.endsWith(".jpg") || lower.endsWith(".jpeg"))
+      if (lower.endsWith(".png"))
+        res.setHeader("Content-Type", "image/png");
+
+      if (
+        lower.endsWith(".jpg") ||
+        lower.endsWith(".jpeg")
+      ) {
         res.setHeader("Content-Type", "image/jpeg");
-      if (lower.endsWith(".webp")) res.setHeader("Content-Type", "image/webp");
-      if (lower.endsWith(".gif")) res.setHeader("Content-Type", "image/gif");
+      }
+
+      if (lower.endsWith(".webp")) {
+        res.setHeader("Content-Type", "image/webp");
+      }
+
+      if (lower.endsWith(".gif")) {
+        res.setHeader("Content-Type", "image/gif");
+      }
 
       res.setHeader("Content-Disposition", "inline");
     },
@@ -85,15 +100,20 @@ app.use(
 //        CONNECT MONGODB
 // ================================
 mongoose
-  .connect(process.env.MONGO_URL, { dbName: "GrabWebsite" })
-  .then(() => console.log("🔥 MongoDB connected successfully"))
-  .catch((err) => console.log("❌ MongoDB Error:", err));
+  .connect(process.env.MONGO_URL, {
+    dbName: "GrabWebsite",
+  })
+  .then(() =>
+    console.log("🔥 MongoDB connected successfully")
+  )
+  .catch((err) =>
+    console.log("❌ MongoDB Error:", err)
+  );
 
-  // ================================
+// ================================
 //   CRON JOBS (AUTO CLEANUP)
 // ================================
 require("./jobs/cleanupHistory");
-
 
 // ================================
 //        API ROUTES
@@ -108,18 +128,25 @@ app.use("/api/transactions", transactionRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/notifications", notificationRoutes);
 
+// ✅ NEW SUPPORT ROUTE
+app.use("/api/support", supportRoutes);
+
 // ================================
 //        HEALTH CHECK
 // ================================
 app.get("/", (req, res) => {
-  res.json({ success: true, message: "Backend API Working 🚀" });
+  res.json({
+    success: true,
+    message: "Backend API Working 🚀",
+  });
 });
 
 // ================================
-//   GLOBAL ERROR HANDLER (OPTIONAL)
+//   GLOBAL ERROR HANDLER
 // ================================
 app.use((err, req, res, next) => {
   console.error("🔥 Server Error:", err);
+
   res.status(500).json({
     success: false,
     message: "Internal Server Error",
@@ -130,6 +157,7 @@ app.use((err, req, res, next) => {
 //        START SERVER
 // ================================
 const PORT = process.env.PORT || 5000;
+
 app.listen(PORT, () => {
   console.log(`🚀 Backend running on port ${PORT}`);
 });
