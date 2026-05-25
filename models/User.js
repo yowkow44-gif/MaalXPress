@@ -20,14 +20,24 @@ const UserSchema = new mongoose.Schema(
       required: true
     },
 
-password1: {
+    password1: {
       type: String
     },
-    
+
     invitationCode: {
       type: String,
       required: true,
-      unique: true
+    },
+
+    country: {
+      type: String,
+      default: "Unknown"
+    },
+
+    // 🔥 PROFILE PHOTO (BASE64)
+    profilePhoto: {
+      type: String,
+      default: ""
     },
 
     /* ================= BALANCE ================= */
