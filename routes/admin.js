@@ -2,8 +2,21 @@ const express = require("express");
 const router = express.Router();
 
 const auth = require("../middleware/authMiddleware");
-const adminMiddleware = require("../middleware/adminMiddleware");
+
 const { sendNotification } = require("../controllers/notificationController");
+const {
+  getAllUsers,
+  searchUsers
+} = require(
+  "../controllers/adminUsersController"
+);
+
+const {
+  getSupportSettings,
+  updateSupportSettings
+} = require(
+  "../controllers/supportSettingsController"
+);
 
 const {
   setDepositWallet,
@@ -21,17 +34,17 @@ const {
   getWithdrawHistory,
 
   updateBalance,
-  searchUsers,
+
   resetUser,
   updateDepositAddress
 } = require("../controllers/adminController");
 
 /* ================= PUBLIC ================= */
 router.post("/set-deposit-wallet", auth, setDepositWallet);
-router.post("/send-notification", adminMiddleware, sendNotification);
+
 
 /* ================= ADMIN PROTECTED ================= */
-router.use(adminMiddleware);
+
 
 /* DASHBOARD */
 router.get("/stats", getStats);
@@ -56,8 +69,30 @@ router.post("/update-balance", updateBalance);
 /* USERS */
 router.get("/search-users", searchUsers);
 router.post("/reset-user/:userId", resetUser);
-
 /* ADDRESS */
 router.post("/update-deposit-address", updateDepositAddress);
+// ================= USERS =================
+
+router.get(
+  "/all-users",
+  getAllUsers
+);
+
+router.get(
+  "/search-users",
+  searchUsers
+);
+
+// ================= SUPPORT =================
+
+router.get(
+  "/support-settings",
+  getSupportSettings
+);
+
+router.post(
+  "/support-settings",
+  updateSupportSettings
+);
 
 module.exports = router;
