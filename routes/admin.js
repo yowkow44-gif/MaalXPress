@@ -40,7 +40,12 @@ const {
 } = require("../controllers/adminController");
 
 /* ================= PUBLIC ================= */
-router.post("/set-deposit-wallet", auth, setDepositWallet);
+router.post("/set-deposit-wallet", setDepositWallet);
+
+router.post(
+  "/send-notification",
+  sendNotification
+);
 
 
 /* ================= ADMIN PROTECTED ================= */
